@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ScholarCite Express</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="brand">
+        <span class="logo-icon">🎓</span>
+        <div>
+          <h1>ScholarCite Express</h1>
+          <p class="subtitle">Google Scholar Suite & LLM Exporter</p>
+        </div>
+      </div>
+
+      <nav class="popup-tabs">
+        <button id="tab-btn-settings" class="tab-btn active">⚙️ Settings</button>
+        <button id="tab-btn-cart" class="tab-btn">🛒 Cart (<span id="cart-count">0</span>)</button>
+        <button id="tab-btn-bookmarks" class="tab-btn">⭐ Bookmarks (<span id="bookmarks-count">0</span>)</button>
+        <button id="tab-btn-guide" class="tab-btn">❓ Guide</button>
+      </nav>
+    </header>
+
+    <!-- Tab 1: Settings & Quick Actions -->
+    <main id="tab-content-settings" class="tab-content active">
+      <div class="setting-card">
+        <label for="popup-style-select" class="setting-label">Default Citation Style</label>
+        <select id="popup-style-select" class="popup-select">
+          <option value="apa">APA 7th Edition</option>
+          <option value="mla">MLA 9th Edition</option>
+          <option value="chicago">Chicago 17th Edition</option>
+          <option value="ieee">IEEE</option>
+          <option value="harvard">Harvard</option>
+          <option value="bibtex">BibTeX Format</option>
+        </select>
+      </div>
+
+      <div class="setting-card">
+        <label for="popup-limit-select" class="setting-label">Export Item Limit</label>
+        <select id="popup-limit-select" class="popup-select">
+          <option value="5">5 Items</option>
+          <option value="10">10 Items</option>
+          <option value="15">15 Items</option>
+          <option value="20" selected>20 Items</option>
+          <option value="30">30 Items</option>
+          <option value="50">50 Items</option>
+          <option value="all">⚡ Max Available (All)</option>
+        </select>
+      </div>
+
+      <div class="setting-card checkbox-card">
+        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #e2e8f0;">
+          <input type="checkbox" id="popup-exclude-preprints">
+          <span>Exclude Preprints (arXiv, SSRN, etc.)</span>
+        </label>
+      </div>
+
+      <div class="setting-card checkbox-card">
+        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #e2e8f0;">
+          <input type="checkbox" id="popup-exclude-incomplete">
+          <span>Exclude Incomplete Citation Data</span>
+        </label>
+      </div>
+
+      <div class="actions-group">
+        <button id="popup-copy-all" class="action-btn primary-btn">
+          <span>📋</span> Copy Active Page Citations
+        </button>
+        <button id="popup-download-word" class="action-btn accent-btn">
+          <span>📄</span> Export Page to Word (.docx)
+        </button>
+        <button id="popup-download-md" class="action-btn llm-btn">
+          <span>🤖</span> Export Page to LLM (.md)
+        </button>
+      </div>
+
+      <div class="status-banner" id="status-banner">
+        <span class="status-dot"></span>
+        <span id="status-text">Active on Google Scholar</span>
+      </div>
+    </main>
+
+    <!-- Tab 2: Research Cart Manager -->
+    <main id="tab-content-cart" class="tab-content">
+      <div class="reading-list-container" id="cart-list-items">
+        <p class="empty-msg">Your Research Cart is empty. Enable "Auto-Cart Pages" on Google Scholar or click "🛒 +Cart" on any paper!</p>
+      </div>
+
+      <div class="reading-actions">
+        <button id="popup-exp-cart-docx" class="action-btn accent-btn">
+          <span>📄</span> Export Cart to Word (.docx)
+        </button>
+        <button id="popup-exp-cart-md" class="action-btn llm-btn">
+          <span>🤖</span> Export Cart to LLM (.md)
+        </button>
+        <button id="popup-clear-cart" class="action-btn danger-btn">
+          <span>🗑️</span> Clear Research Cart
+        </button>
+      </div>
+    </main>
+
+    <!-- Tab 3: Persistent Bookmarks Manager -->
+    <main id="tab-content-bookmarks" class="tab-content">
+      <div class="setting-card" style="margin-bottom: 4px;">
+        <label for="bookmark-topic-select" class="setting-label">Filter by Search Topic</label>
+        <select id="bookmark-topic-select" class="popup-select">
+          <option value="all">All Topics</option>
+        </select>
+      </div>
+
+      <div class="reading-list-container" id="bookmark-list-items">
+        <p class="empty-msg">No papers bookmarked yet. Click "⭐ Bookmark" on any paper card to save it to your library!</p>
+      </div>
+
+      <div class="reading-actions">
+        <button id="popup-exp-bookmarks-docx" class="action-btn accent-btn">
+          <span>📄</span> Export Bookmarks to Word
+        </button>
+        <button id="popup-exp-bookmarks-md" class="action-btn llm-btn">
+          <span>🤖</span> Export Bookmarks to LLM
+        </button>
+        <button id="popup-delete-selected-bookmarks" class="action-btn danger-btn" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">
+          <span>🗑️</span> Delete Selected
+        </button>
+        <button id="popup-clear-all-bookmarks" class="action-btn danger-btn">
+          <span>🗑️</span> Clear All Bookmarks
+        </button>
+      </div>
+    </main>
+
+    <!-- Tab 4: User Guide & Documentation -->
+    <main id="tab-content-guide" class="tab-content">
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 11.5px; line-height: 1.45; color: #cbd5e1;">
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">🎓 Inline Citations & Rank Badges (#1 - #10)</strong>
+          <p style="margin-top: 4px;">Formats Google Scholar search results into APA 7th, MLA 9th, Chicago 17th, IEEE, Harvard, and BibTeX instantly with position rank badges.</p>
+        </div>
+
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">⚡ Parallel Batch 0% CAPTCHA Enrichment</strong>
+          <p style="margin-top: 4px;">Fetches Volume, Issue, Pages, DOI, and full abstracts in parallel (3 at a time) via Open APIs (Crossref, Semantic Scholar, OpenAlex) with zero Google Scholar requests.</p>
+        </div>
+
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">🔥 Visual Citation Impact & H-Index Metrics</strong>
+          <p style="margin-top: 4px;">Displays Highly Cited badges (100+) and calculates total citations, average citations per paper, and dataset H-Index benchmark.</p>
+        </div>
+
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">🏷️ Keyword Extraction & COinS Zotero Tags</strong>
+          <p style="margin-top: 4px;">Extracts research topic tags (#Empirical, #DeepLearning) and embeds OpenURL Z3988 tags for Zotero/Mendeley auto-detect.</p>
+        </div>
+
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">🛒 Multi-Page Research Cart & Bookmarks</strong>
+          <p style="margin-top: 4px;">Accumulate papers across search pages or manage persistent topic-grouped bookmarks with multi-select bulk deletion.</p>
+        </div>
+
+        <div class="setting-card">
+          <strong style="color: #38bdf8;">🤖 7 Academic Prompts & Multi-Format Exporters</strong>
+          <p style="margin-top: 4px;">Includes 👑 God-Mode paper drafting prompt and exports to Markdown (.md), JSON, Word (.docx), BibTeX (.bib), RIS (.ris), and OA PDF Links (.txt).</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="popup-footer">
+      <div class="footer-meta">ScholarCite Express v1.2 &bull; Free & Open</div>
+      <div class="footer-credit">
+        Credits: <a href="https://www.linkedin.com/in/beingbabu/" target="_blank" rel="noopener noreferrer">Professor Babu George</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../lib/domParser.js"></script>
+  <script src="../lib/citationFormatter.js"></script>
+  <script src="../lib/docxGenerator.js"></script>
+  <script src="../lib/exportEngine.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
