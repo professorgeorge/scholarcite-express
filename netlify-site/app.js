@@ -169,7 +169,7 @@
    */
   async function executeSearch(query) {
     if (!query) return;
-    currentQuery = query;
+    currentQuery = query.trim();
     isLoading = true;
 
     const resultsContainer = document.getElementById('results-container');
@@ -177,37 +177,69 @@
       resultsContainer.innerHTML = `
         <div class="loading-box">
           <div class="loading-spinner"></div>
-          <p>Searching OpenAlex & Crossref global academic records for <strong>"${escapeHTML(query)}"</strong>...</p>
+          <p>Searching OpenAlex & Crossref global academic records for <strong>"${escapeHTML(currentQuery)}"</strong>...</p>
         </div>
       `;
     }
 
     try {
-      // 1. Fetch from OpenAlex
-      const cleanQ = query.replace(/[^\w\s]/gi, ' ').trim();
-      const openAlexUrl = `https://api.openalex.org/works?search=${encodeURIComponent(cleanQ)}&per_page=20&mailto=scholarcite.express@gmail.com`;
-      
       let fetchedWorks = [];
-      try {
-        const res = await fetch(openAlexUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.results && data.results.length > 0) {
-            fetchedWorks = data.results.map((work, idx) => transformOpenAlexWork(work, idx + 1));
+
+      // Check if query contains a DOI
+      const doiMatch = currentQuery.match(/\b(10\.\d{4,9}\/[-._;()/:A-Za-z0-9]+)\b/i);
+      if (doiMatch) {
+        const cleanDoi = doiMatch[1];
+        try {
+          const doiUrl = `https://api.openalex.org/works/https://doi.org/${encodeURIComponent(cleanDoi)}?mailto=scholarcite.express@gmail.com`;
+          const res = await fetch(doiUrl);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.id) {
+              fetchedWorks = [transformOpenAlexWork(data, 1)];
+            }
           }
+        } catch (e) {}
+
+        if (fetchedWorks.length === 0) {
+          try {
+            const crDoiUrl = `https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`;
+            const resCr = await fetch(crDoiUrl);
+            if (resCr.ok) {
+              const crData = await resCr.json();
+              if (crData.message) {
+                fetchedWorks = [transformCrossrefItem(crData.message, 1)];
+              }
+            }
+          } catch (e) {}
         }
-      } catch (err) {
-        console.warn('OpenAlex fetch error, trying Crossref fallback...', err);
       }
 
-      // 2. Crossref fallback if OpenAlex returned nothing
+      // 1. Fetch from OpenAlex if not DOI or if DOI not resolved
       if (fetchedWorks.length === 0) {
-        const crossrefUrl = `https://api.crossref.org/works?query=${encodeURIComponent(cleanQ)}&rows=15`;
-        const resCr = await fetch(crossrefUrl);
-        if (resCr.ok) {
-          const crData = await resCr.json();
-          if (crData.message && crData.message.items) {
-            fetchedWorks = crData.message.items.map((item, idx) => transformCrossrefItem(item, idx + 1));
+        const cleanQ = currentQuery.replace(/[^\w\s]/gi, ' ').trim();
+        const openAlexUrl = `https://api.openalex.org/works?search=${encodeURIComponent(cleanQ)}&per_page=20&mailto=scholarcite.express@gmail.com`;
+        
+        try {
+          const res = await fetch(openAlexUrl);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.results && data.results.length > 0) {
+              fetchedWorks = data.results.map((work, idx) => transformOpenAlexWork(work, idx + 1));
+            }
+          }
+        } catch (err) {
+          console.warn('OpenAlex fetch error, trying Crossref fallback...', err);
+        }
+
+        // 2. Crossref fallback if OpenAlex returned nothing
+        if (fetchedWorks.length === 0) {
+          const crossrefUrl = `https://api.crossref.org/works?query=${encodeURIComponent(cleanQ)}&rows=15`;
+          const resCr = await fetch(crossrefUrl);
+          if (resCr.ok) {
+            const crData = await resCr.json();
+            if (crData.message && crData.message.items) {
+              fetchedWorks = crData.message.items.map((item, idx) => transformCrossrefItem(item, idx + 1));
+            }
           }
         }
       }
